@@ -1,20 +1,20 @@
 # Banking RAG Assistant
 
-Assistant bancaire conversationnel fondé sur un pipeline RAG, construit avec
-FastAPI, LangChain, ChromaDB et les modèles Groq.
+A production-oriented conversational banking assistant powered by a retrieval-
+augmented generation pipeline, FastAPI, LangChain, ChromaDB, and Groq models.
 
-## État du projet
+## Project status
 
-Le projet est en cours de construction. Le premier jalon met en place
-l'architecture, la configuration et un endpoint de santé minimal.
+The project is under active development. The first milestone provides the
+application structure, configuration layer, and a minimal health endpoint.
 
-## Prérequis
+## Prerequisites
 
 - Python 3.12
 - Git
-- Docker Desktop (optionnel à ce stade)
+- Docker Desktop (optional at this stage)
 
-## Démarrage local
+## Local development
 
 ```powershell
 python -m venv .venv
@@ -25,15 +25,15 @@ Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-L'API répond ensuite sur `http://127.0.0.1:8000` et sa documentation sur
-`http://127.0.0.1:8000/docs`.
+The API is available at `http://127.0.0.1:8000`, and its interactive
+documentation is available at `http://127.0.0.1:8000/docs`.
 
-## Vérification
+## Verification
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 pytest
 ```
 
-La clé Groq devra être placée dans `.env`. Ce fichier ne doit jamais être
-commité.
+Add the Groq API key to `.env` when the model integration is implemented. Never
+commit this file or expose the API key in source code.
