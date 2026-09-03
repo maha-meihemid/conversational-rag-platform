@@ -29,9 +29,11 @@ def download_dataset(destination: Path, *, force: bool = False) -> Path:
             DATASET_URL,
             headers={"User-Agent": "banking-rag-assistant/0.1"},
         )
-        with urllib.request.urlopen(request, timeout=60) as response:
-            with archive_path.open("wb") as archive_file:
-                shutil.copyfileobj(response, archive_file)
+        with (
+            urllib.request.urlopen(request, timeout=60) as response,
+            archive_path.open("wb") as archive_file,
+        ):
+            shutil.copyfileobj(response, archive_file)
 
         with zipfile.ZipFile(archive_path) as archive:
             matching_files = [
@@ -46,9 +48,11 @@ def download_dataset(destination: Path, *, force: bool = False) -> Path:
                 )
 
             temporary_output = output_path.with_suffix(".csv.tmp")
-            with archive.open(matching_files[0]) as source:
-                with temporary_output.open("wb") as target:
-                    shutil.copyfileobj(source, target)
+            with (
+                archive.open(matching_files[0]) as source,
+                temporary_output.open("wb") as target,
+            ):
+                shutil.copyfileobj(source, target)
             temporary_output.replace(output_path)
 
     return output_path

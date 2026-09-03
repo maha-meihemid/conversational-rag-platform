@@ -5,8 +5,8 @@ augmented generation pipeline, FastAPI, LangChain, ChromaDB, and Groq models.
 
 ## Project status
 
-The project is under active development. The first milestone provides the
-application structure, configuration layer, and a minimal health endpoint.
+The project is under active development. It currently provides dataset
+preparation, ChromaDB semantic retrieval, and a Groq-powered RAG chat service.
 
 ## Prerequisites
 
@@ -35,8 +35,8 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 pytest
 ```
 
-Add the Groq API key to `.env` when the model integration is implemented. Never
-commit this file or expose the API key in source code.
+Add the Groq API key to `.env`. Never commit this file or expose the API key in
+source code.
 
 ## Dataset preparation
 
@@ -93,3 +93,23 @@ python scripts/search_knowledge_base.py "How can I reset my card PIN?"
 
 The query and all FAQ documents are embedded with the same configured model. The
 search returns the five closest FAQ records and their relevance scores by default.
+
+## RAG chat service
+
+Create a Groq API key and add it to your local `.env` file:
+
+```env
+GROQ_API_KEY=your_key_here
+```
+
+After preparing and indexing the knowledge base, ask a question from the terminal:
+
+```powershell
+python scripts/ask.py "How can I reset my card PIN?"
+```
+
+The service retrieves the most relevant FAQs, removes weak matches, and sends only
+the grounded context to Groq. FAQ sources are kept internally for testing and
+observability but are not displayed to end users. The current milestone is stateless;
+conversation memory will be added separately. Model reasoning is hidden so that end
+users receive only the final answer.
