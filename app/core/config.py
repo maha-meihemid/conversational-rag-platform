@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 5
     retrieval_min_score: float = 0.35
 
+    conversation_db_url: str = "sqlite:///./data/conversations.db"
+    conversation_history_limit: int = 10
+
 
 @lru_cache
 def get_settings() -> Settings:

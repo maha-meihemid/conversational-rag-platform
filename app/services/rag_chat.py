@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
 
 from app.core.config import settings
@@ -25,7 +25,21 @@ PROMPT = ChatPromptTemplate.from_messages(
             "Answer clearly and concisely in the same language as the user. If the context "
             "does not contain the answer, say that you do not have enough information.",
         ),
+        MessagesPlaceholder(variable_name="history", optional=True),
         ("human", "Question:\n{question}\n\nContext:\n{context}"),
+    ]
+)
+
+REWRITE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "Rewrite the latest user question as a standalone search question using the "
+            "conversation history. Keep the same language. Return only the rewritten "
+            "question and do not answer it.",
+        ),
+        MessagesPlaceholder(variable_name="history"),
+        ("human", "Latest question: {question}"),
     ]
 )
 
@@ -52,29 +66,36 @@ class RAGChatService:
         *,
         top_k: int = 5,
         min_score: float = 0.35,
+        history_limit: int = 10,
     ) -> None:
         self.search = search
         self.generate = generate
         self.top_k = top_k
         self.min_score = min_score
+        self.history_limit = history_limit
 
-    def ask(self, question: str) -> RAGAnswer:
+    def ask(self, question: str, *, history: list[BaseMessage] | None = None) -> RAGAnswer:
         clean_question = question.strip()
         if not clean_question:
             raise ValueError("Question cannot be empty.")
 
-        matches = self.search(clean_question, self.top_k)
+        recent_history = (history or [])[-self.history_limit :]
+        search_question = self._rewrite_question(clean_question, recent_history)
+        matches = self.search(search_question, self.top_k)
         relevant_matches = [match for match in matches if match[1] >= self.min_score]
 
         if not relevant_matches:
             return RAGAnswer(answer=NO_ANSWER, sources=[])
 
         context = self._format_context(relevant_matches)
-        messages = PROMPT.format_messages(question=clean_question, context=context)
+        messages = PROMPT.format_messages(
+            history=recent_history,
+            question=clean_question,
+            context=context,
+        )
         response = self.generate(messages)
 
-        if not isinstance(response.content, str) or not response.content.strip():
-            raise RuntimeError("Groq returned an empty text response.")
+        answer = self._message_text(response, "Groq returned an empty text response.")
 
         sources = [
             Source(
@@ -85,7 +106,21 @@ class RAGChatService:
             )
             for document, score in relevant_matches
         ]
-        return RAGAnswer(answer=response.content.strip(), sources=sources)
+        return RAGAnswer(answer=answer, sources=sources)
+
+    def _rewrite_question(self, question: str, history: list[BaseMessage]) -> str:
+        if not history:
+            return question
+
+        messages = REWRITE_PROMPT.format_messages(history=history, question=question)
+        response = self.generate(messages)
+        return self._message_text(response, "Groq returned an empty rewritten question.")
+
+    @staticmethod
+    def _message_text(message: BaseMessage, error_message: str) -> str:
+        if not isinstance(message.content, str) or not message.content.strip():
+            raise RuntimeError(error_message)
+        return message.content.strip()
 
     @staticmethod
     def _format_context(matches: list[tuple[Document, float]]) -> str:
@@ -120,4 +155,5 @@ def create_rag_chat_service() -> RAGChatService:
         generate=generate,
         top_k=settings.retrieval_top_k,
         min_score=settings.retrieval_min_score,
+        history_limit=settings.conversation_history_limit,
     )

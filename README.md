@@ -110,6 +110,20 @@ python scripts/ask.py "How can I reset my card PIN?"
 
 The service retrieves the most relevant FAQs, removes weak matches, and sends only
 the grounded context to Groq. FAQ sources are kept internally for testing and
-observability but are not displayed to end users. The current milestone is stateless;
-conversation memory will be added separately. Model reasoning is hidden so that end
-users receive only the final answer.
+observability but are not displayed to end users. Model reasoning is hidden so that
+end users receive only the final answer.
+
+## Conversation memory
+
+Conversation history is managed by LangChain's `RunnableWithMessageHistory` and
+persisted locally with `SQLChatMessageHistory` and SQLite. Each conversation is
+isolated by its identifier. Use the same identifier for follow-up questions:
+
+```powershell
+python scripts/ask.py "How do I replace my card?" --conversation-id demo
+python scripts/ask.py "How long does it take?" --conversation-id demo
+```
+
+Before retrieval, a follow-up question is rewritten as a standalone question using
+the recent conversation history. The SQLite database is stored at
+`data/conversations.db` and is excluded from Git.
