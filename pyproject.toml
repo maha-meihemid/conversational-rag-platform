@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "banking-rag-assistant"
 version = "0.1.0"
-description = "Production-oriented conversational RAG assistant for banking FAQs"
+description = "Conversational RAG assistant for banking FAQs"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115,<1.0",
     "pydantic-settings>=2.7,<3.0",
@@ -31,12 +31,12 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
