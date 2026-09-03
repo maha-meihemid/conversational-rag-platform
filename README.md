@@ -127,3 +127,35 @@ python scripts/ask.py "How long does it take?" --conversation-id demo
 Before retrieval, a follow-up question is rewritten as a standalone question using
 the recent conversation history. The SQLite database is stored at
 `data/conversations.db` and is excluded from Git.
+
+## Chat API
+
+Start the API after preparing and indexing the knowledge base:
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+Send the first message without a conversation identifier:
+
+```powershell
+$response = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://127.0.0.1:8000/api/v1/chat `
+  -ContentType "application/json" `
+  -Body '{"message":"How can I change my PIN?"}'
+```
+
+Reuse `$response.conversation_id` in later requests to continue the same session.
+The response contains only `conversation_id` and `answer`; retrieval sources and
+provider details are never exposed to the client.
+
+Clear a conversation and its persisted messages with:
+
+```powershell
+Invoke-RestMethod `
+  -Method Delete `
+  -Uri "http://127.0.0.1:8000/api/v1/conversations/$($response.conversation_id)"
+```
+
+Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
