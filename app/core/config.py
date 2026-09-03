@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
 
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "qwen/qwen3.6-27b"
 
     chroma_persist_directory: str = "./chroma_db"
     chroma_collection_name: str = "banking_faq"
@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     )
     embedding_device: str = "cpu"
     retrieval_top_k: int = 5
+    retrieval_min_score: float = 0.35
 
 
 @lru_cache

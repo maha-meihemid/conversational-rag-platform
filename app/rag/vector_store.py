@@ -73,7 +73,11 @@ def load_faq_documents(path: Path = DEFAULT_KNOWLEDGE_BASE) -> tuple[list[Docume
     return documents, ids
 
 
-def batched(items: list[Document], ids: list[str], size: int) -> Iterable[tuple[list[Document], list[str]]]:
+def batched(
+    items: list[Document],
+    ids: list[str],
+    size: int,
+) -> Iterable[tuple[list[Document], list[str]]]:
     for start in range(0, len(items), size):
         end = start + size
         yield items[start:end], ids[start:end]
