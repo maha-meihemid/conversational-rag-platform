@@ -20,6 +20,11 @@ class Settings(BaseSettings):
 
     chroma_persist_directory: str = "./chroma_db"
     chroma_collection_name: str = "banking_faq"
+    embedding_model: str = (
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    embedding_device: str = "cpu"
+    retrieval_top_k: int = 5
 
 
 @lru_cache

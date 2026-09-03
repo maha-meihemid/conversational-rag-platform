@@ -66,3 +66,30 @@ The command creates `data/processed/banking_faq.jsonl` and a data-quality report
 at `data/processed/quality_report.json`. Each normalized record contains a stable
 identifier, category, question, answer, source, and the exact text that will be
 embedded during the vector-store ingestion step.
+
+## Vector-store indexing
+
+Install the updated project dependencies after pulling this milestone:
+
+```powershell
+pip install -e ".[dev]"
+```
+
+Create the local ChromaDB index:
+
+```powershell
+python scripts/index_knowledge_base.py
+```
+
+The first run downloads the multilingual embedding model. ChromaDB persists the
+result under `chroma_db`, which is excluded from Git. Running the indexing command
+again updates the same FAQ identifiers instead of creating duplicates.
+
+Test semantic retrieval without calling an LLM:
+
+```powershell
+python scripts/search_knowledge_base.py "How can I reset my card PIN?"
+```
+
+The query and all FAQ documents are embedded with the same configured model. The
+search returns the five closest FAQ records and their relevance scores by default.
