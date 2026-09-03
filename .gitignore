@@ -219,6 +219,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/conversations.db*
 chroma_db/*
 !chroma_db/.gitkeep
 
