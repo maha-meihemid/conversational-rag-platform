@@ -4,7 +4,11 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.api.dependencies import APIKeyDependency, get_conversation_service
+from app.api.dependencies import (
+    APIKeyDependency,
+    ChatRateLimitDependency,
+    get_conversation_service,
+)
 from app.models.chat import ChatRequest, ChatResponse
 from app.services.conversation import ConversationService
 
@@ -20,7 +24,7 @@ ConversationServiceDependency = Annotated[
 def chat(
     request: ChatRequest,
     service: ConversationServiceDependency,
-    _: APIKeyDependency,
+    _: ChatRateLimitDependency,
 ) -> ChatResponse:
     conversation_id = request.conversation_id or uuid4()
 

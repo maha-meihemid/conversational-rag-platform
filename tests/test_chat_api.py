@@ -5,8 +5,9 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from app.api.dependencies import get_conversation_service
+from app.api.dependencies import get_chat_rate_limiter, get_conversation_service
 from app.core.config import settings
+from app.core.rate_limit import RateLimiter
 from app.main import app
 
 client = TestClient(app)
@@ -162,3 +163,29 @@ def test_chat_fails_closed_without_configured_api_key(
     assert response.status_code == 503
     assert response.json() == {"detail": "API authentication is not configured."}
     assert conversation_service.ask_calls == []
+
+
+def test_chat_returns_429_when_rate_limit_is_reached(
+    conversation_service: FakeConversationService,
+) -> None:
+    limiter = RateLimiter(requests=1, window_seconds=60, clock=lambda: 100.0)
+    app.dependency_overrides[get_chat_rate_limiter] = lambda: limiter
+
+    first_response = client.post(
+        "/api/v1/chat",
+        json={"message": "First question"},
+        headers=AUTH_HEADERS,
+    )
+    limited_response = client.post(
+        "/api/v1/chat",
+        json={"message": "Second question"},
+        headers=AUTH_HEADERS,
+    )
+
+    assert first_response.status_code == 200
+    assert limited_response.status_code == 429
+    assert limited_response.headers["Retry-After"] == "60"
+    assert limited_response.json() == {
+        "detail": "Too many chat requests. Please try again later."
+    }
+    assert len(conversation_service.ask_calls) == 1
