@@ -311,6 +311,17 @@ Readiness returns `503 Service Unavailable` when a dependency is unavailable. It
 only the state of each check and never exposes credentials or internal error messages.
 Docker uses the readiness endpoint for its container health check.
 
+## Metrics
+
+Prometheus metrics are available at `http://127.0.0.1:8000/metrics`:
+
+- `rag_http_requests_total` counts requests by method, route, and status code.
+- `rag_http_request_duration_seconds` measures request duration by method and route.
+
+Metric labels never contain API keys, questions, answers, or conversation identifiers.
+In production, restrict access to `/metrics` at the reverse proxy or private network
+level so that only the monitoring system can scrape it.
+
 ## Conversation memory
 
 LangChain's `RunnableWithMessageHistory` manages the conversation lifecycle, while
