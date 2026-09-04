@@ -108,9 +108,10 @@ list of supported variables and safe local defaults is available in `.env.exampl
 
 ### Secret management
 
-`GROQ_API_KEY` is the only application secret. It is represented as a masked secret
-inside the application and is never returned by the API. For local development, keep
-it in the untracked `.env` file. Never add a real key to `.env.example`.
+`GROQ_API_KEY` and `APP_API_KEY` are application secrets. They are represented as
+masked secrets inside the application and are never returned by the API. For local
+development, keep them in the untracked `.env` file. Never add real keys to
+`.env.example`.
 
 In a production environment, inject the secret through the platform's environment
 configuration instead of copying `.env` into the image. For example, PowerShell can
@@ -227,14 +228,30 @@ Profile editing is disabled by default. For local administration, set:
 ASSISTANT_PROFILE_EDITING_ENABLED=true
 ```
 
-The future administration interface will update the structured profile through:
+The administration interface updates the structured profile through:
 
 ```text
 PUT /api/v1/assistant-profile
 ```
 
 The saved profile is stored in `data/assistant_profile.json`. Keep profile editing
-disabled on a public deployment unless the endpoint is protected by authentication.
+disabled unless administrators need to update it.
+
+## API authentication
+
+Set a long, random application key in `.env` before using protected endpoints:
+
+```env
+APP_API_KEY=replace_with_a_long_random_value
+```
+
+Clients send this value in the `X-API-Key` header. Authentication protects chat,
+conversation deletion, and assistant profile updates. The web page, health endpoint,
+and read-only assistant profile endpoint remain public. If no application key is
+configured, protected endpoints return `503` instead of running without authentication.
+
+The web interface keeps the entered access key only in browser `sessionStorage`; it is
+removed when the browser tab is closed.
 
 ## Conversation memory
 
@@ -261,9 +278,9 @@ uvicorn app.main:app --reload
 Swagger UI is available at `http://127.0.0.1:8000/docs`.
 
 The web interface is available at `http://127.0.0.1:8000`. It provides a
-session-aware chat and an assistant profile editor. The browser stores only the
-conversation identifier; sources, model reasoning, provider credentials, and chat
-history remain server-side.
+session-aware chat and an assistant profile editor. The browser stores the conversation
+identifier locally and the API access key for the current tab only. Sources, model
+reasoning, Groq credentials, and chat history remain server-side.
 
 Send a first message:
 
@@ -271,6 +288,7 @@ Send a first message:
 $response = Invoke-RestMethod `
   -Method Post `
   -Uri http://127.0.0.1:8000/api/v1/chat `
+  -Headers @{ "X-API-Key" = $env:APP_API_KEY } `
   -ContentType "application/json" `
   -Body '{"message":"How do I reset my password?"}'
 ```
@@ -284,7 +302,8 @@ Clear the session memory:
 ```powershell
 Invoke-RestMethod `
   -Method Delete `
-  -Uri "http://127.0.0.1:8000/api/v1/conversations/$($response.conversation_id)"
+  -Uri "http://127.0.0.1:8000/api/v1/conversations/$($response.conversation_id)" `
+  -Headers @{ "X-API-Key" = $env:APP_API_KEY }
 ```
 
 ## Verification

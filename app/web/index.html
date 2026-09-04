@@ -34,6 +34,15 @@
           </button>
         </nav>
 
+        <form class="access-form" id="access-form">
+          <label for="api-key">API access key</label>
+          <div>
+            <input id="api-key" name="api-key" type="password" autocomplete="off" required>
+            <button type="submit">Connect</button>
+          </div>
+          <span id="access-status" role="status">Required for protected actions.</span>
+        </form>
+
         <div class="system-card">
           <div class="status-line">
             <span class="status-dot" aria-hidden="true"></span>

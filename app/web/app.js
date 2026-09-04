@@ -1,5 +1,6 @@
 const API_BASE = "/api/v1";
 const SESSION_KEY = "rag_conversation_id";
+const API_KEY_SESSION_KEY = "rag_api_key";
 
 const elements = {
   chatForm: document.querySelector("#chat-form"),
@@ -15,7 +16,24 @@ const elements = {
   saveProfile: document.querySelector("#save-profile"),
   apiStatus: document.querySelector("#api-status"),
   statusDot: document.querySelector(".status-dot"),
+  accessForm: document.querySelector("#access-form"),
+  apiKey: document.querySelector("#api-key"),
+  accessStatus: document.querySelector("#access-status"),
 };
+
+function authHeaders(includeJson = false) {
+  const headers = {};
+  const apiKey = sessionStorage.getItem(API_KEY_SESSION_KEY);
+  if (apiKey) headers["X-API-Key"] = apiKey;
+  if (includeJson) headers["Content-Type"] = "application/json";
+  return headers;
+}
+
+function authenticationError(response) {
+  return response.status === 401
+    ? "Enter a valid API access key in the sidebar."
+    : "The assistant is temporarily unavailable.";
+}
 
 function setApiStatus(online) {
   elements.apiStatus.textContent = online ? "API online" : "API unavailable";
@@ -56,10 +74,10 @@ async function sendMessage(message) {
   try {
     const response = await fetch(`${API_BASE}/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(true),
       body: JSON.stringify(payload),
     });
-    if (!response.ok) throw new Error("The assistant is temporarily unavailable.");
+    if (!response.ok) throw new Error(authenticationError(response));
     const result = await response.json();
     localStorage.setItem(SESSION_KEY, result.conversation_id);
     pending.remove();
@@ -104,7 +122,10 @@ elements.newChat.addEventListener("click", async () => {
   const conversationId = localStorage.getItem(SESSION_KEY);
   if (conversationId) {
     try {
-      await fetch(`${API_BASE}/conversations/${conversationId}`, { method: "DELETE" });
+      await fetch(`${API_BASE}/conversations/${conversationId}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
     } catch {
       // Local session reset remains available if the API cannot be reached.
     }
@@ -144,9 +165,12 @@ elements.profileForm.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(`${API_BASE}/assistant-profile`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(true),
       body: JSON.stringify(profile),
     });
+    if (response.status === 401) {
+      throw new Error("Enter a valid API access key in the sidebar.");
+    }
     if (response.status === 403) {
       throw new Error("Editing is disabled. Enable it in the server environment first.");
     }
@@ -158,6 +182,16 @@ elements.profileForm.addEventListener("submit", async (event) => {
   } finally {
     elements.saveProfile.disabled = false;
   }
+});
+
+elements.accessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const apiKey = elements.apiKey.value.trim();
+  sessionStorage.setItem(API_KEY_SESSION_KEY, apiKey);
+  elements.apiKey.value = "";
+  elements.accessStatus.textContent = "Key stored for this browser tab.";
+  elements.composerStatus.textContent = "API key ready · Session memory is active";
+  elements.messageInput.focus();
 });
 
 document.querySelectorAll("[data-view]").forEach((button) => {

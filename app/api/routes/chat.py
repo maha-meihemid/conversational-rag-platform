@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.api.dependencies import get_conversation_service
+from app.api.dependencies import APIKeyDependency, get_conversation_service
 from app.models.chat import ChatRequest, ChatResponse
 from app.services.conversation import ConversationService
 
@@ -17,7 +17,11 @@ ConversationServiceDependency = Annotated[
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest, service: ConversationServiceDependency) -> ChatResponse:
+def chat(
+    request: ChatRequest,
+    service: ConversationServiceDependency,
+    _: APIKeyDependency,
+) -> ChatResponse:
     conversation_id = request.conversation_id or uuid4()
 
     try:
@@ -40,6 +44,7 @@ def chat(request: ChatRequest, service: ConversationServiceDependency) -> ChatRe
 def clear_conversation(
     conversation_id: UUID,
     service: ConversationServiceDependency,
+    _: APIKeyDependency,
 ) -> Response:
     try:
         service.clear(str(conversation_id))

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
 from app.core.config import settings
 from app.main import app
@@ -10,6 +11,7 @@ from app.models.assistant import AssistantProfile
 from app.services.assistant_profile import AssistantProfileStore, get_assistant_profile_store
 
 client = TestClient(app)
+AUTH_HEADERS = {"X-API-Key": "test-api-key"}
 
 
 @pytest.fixture
@@ -21,6 +23,11 @@ def profile_store(tmp_path: Path) -> Iterator[AssistantProfileStore]:
     app.dependency_overrides[get_assistant_profile_store] = lambda: store
     yield store
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "app_api_key", SecretStr(AUTH_HEADERS["X-API-Key"]))
 
 
 def test_profile_store_persists_configuration(tmp_path: Path) -> None:
@@ -61,6 +68,7 @@ def test_update_assistant_profile_when_enabled(
             "instructions": "Provide numbered steps when useful.",
             "fallback_message": "I cannot answer that from the support knowledge base.",
         },
+        headers=AUTH_HEADERS,
     )
 
     assert response.status_code == 200
@@ -76,6 +84,7 @@ def test_update_assistant_profile_is_disabled_by_default(
     response = client.put(
         "/api/v1/assistant-profile",
         json=AssistantProfile().model_dump(),
+        headers=AUTH_HEADERS,
     )
 
     assert response.status_code == 403
