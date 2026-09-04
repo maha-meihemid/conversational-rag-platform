@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
 
 from app.core.config import settings
-from app.models.assistant import AssistantProfile, DEFAULT_ASSISTANT_PROFILE
+from app.models.assistant import DEFAULT_ASSISTANT_PROFILE, AssistantProfile
 from app.rag.vector_store import create_embeddings, create_vector_store, search_documents
 from app.services.assistant_profile import get_assistant_profile_store
 
