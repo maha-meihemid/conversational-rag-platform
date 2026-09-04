@@ -39,6 +39,19 @@ app = ["web/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "unit: isolated business logic tests",
+    "api: FastAPI endpoint contract tests",
+    "integration: tests spanning multiple application components",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
 
 [tool.ruff]
 line-length = 100
