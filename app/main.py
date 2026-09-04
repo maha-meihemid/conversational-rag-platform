@@ -6,15 +6,19 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.logging import configure_logging
+from app.core.request_logging import log_request
 
 
 def create_app() -> FastAPI:
+    configure_logging(settings.log_level)
     web_directory = Path(__file__).parent / "web"
     application = FastAPI(
         title=settings.app_name,
         debug=settings.app_debug,
         version="0.1.0",
     )
+    application.middleware("http")(log_request)
     application.include_router(api_router, prefix=settings.api_v1_prefix)
     application.mount("/static", StaticFiles(directory=web_directory), name="static")
 
