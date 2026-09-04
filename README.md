@@ -95,6 +95,17 @@ GROQ_API_KEY=your_key_here
 
 Never commit `.env` or expose provider credentials to a client application.
 
+### Environment configuration
+
+The application reads its configuration from environment variables. Values provided
+by the operating system or container take precedence over the local `.env` file.
+Configuration is validated during startup, so invalid values fail early with a clear
+error.
+
+`APP_ENV` accepts `development`, `test`, or `production`. Retrieval and conversation
+limits are bounded to prevent accidental resource-heavy configurations. The complete
+list of supported variables and safe local defaults is available in `.env.example`.
+
 ## Prepare a knowledge base
 
 There are two supported workflows.
