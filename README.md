@@ -271,6 +271,18 @@ The limiter is stored in the API process, which keeps the single-container deplo
 simple and requires no extra service. Use a shared Redis-backed limiter when deploying
 multiple API replicas.
 
+## Health and readiness
+
+The public probe endpoints serve different purposes:
+
+- `GET /api/v1/health` returns `200` when the API process is running.
+- `GET /api/v1/ready` returns `200` only when required secrets are configured, the
+  ChromaDB collection exists, and the conversation database is reachable.
+
+Readiness returns `503 Service Unavailable` when a dependency is unavailable. It reports
+only the state of each check and never exposes credentials or internal error messages.
+Docker uses the readiness endpoint for its container health check.
+
 ## Conversation memory
 
 LangChain's `RunnableWithMessageHistory` manages the conversation lifecycle, while
