@@ -10,6 +10,8 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("RETRIEVAL_TOP_K", "8")
     monkeypatch.setenv("API_V1_PREFIX", "/api/v2/")
     monkeypatch.setenv("RATE_LIMIT_REQUESTS", "30")
+    monkeypatch.setenv("GROQ_TIMEOUT_SECONDS", "45.5")
+    monkeypatch.setenv("GROQ_MAX_RETRIES", "3")
 
     configured = Settings(_env_file=None)  # type: ignore[call-arg]
 
@@ -18,6 +20,8 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     assert configured.retrieval_top_k == 8
     assert configured.api_v1_prefix == "/api/v2"
     assert configured.rate_limit_requests == 30
+    assert configured.groq_timeout_seconds == 45.5
+    assert configured.groq_max_retries == 3
 
 
 @pytest.mark.parametrize("top_k", ["0", "21"])
@@ -40,6 +44,26 @@ def test_settings_reject_invalid_environment(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_settings_reject_invalid_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("RATE_LIMIT_REQUESTS", "0")
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("GROQ_TIMEOUT_SECONDS", "0"),
+        ("GROQ_TIMEOUT_SECONDS", "121"),
+        ("GROQ_MAX_RETRIES", "-1"),
+        ("GROQ_MAX_RETRIES", "6"),
+    ],
+)
+def test_settings_reject_invalid_groq_resilience_values(
+    monkeypatch: pytest.MonkeyPatch,
+    variable: str,
+    value: str,
+) -> None:
+    monkeypatch.setenv(variable, value)
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)  # type: ignore[call-arg]
