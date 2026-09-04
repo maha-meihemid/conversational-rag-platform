@@ -19,6 +19,7 @@ without code changes. The banking dataset is retained only as an optional exampl
 - Follow-up question rewriting before retrieval
 - Configurable assistant profiles with immutable RAG safety rules
 - FastAPI endpoints with validated public response models
+- Responsive web interface for chat and assistant profile configuration
 - Unit and API tests that do not call external model providers
 
 ## Architecture
@@ -228,6 +229,11 @@ uvicorn app.main:app --reload
 ```
 
 Swagger UI is available at `http://127.0.0.1:8000/docs`.
+
+The web interface is available at `http://127.0.0.1:8000`. It provides a
+session-aware chat and an assistant profile editor. The browser stores only the
+conversation identifier; sources, model reasoning, provider credentials, and chat
+history remain server-side.
 
 Send a first message:
 

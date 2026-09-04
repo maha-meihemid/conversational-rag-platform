@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A conversational interface for your private knowledge base.">
+    <title>Conversational RAG Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#chat">Skip to conversation</a>
+    <div class="grain" aria-hidden="true"></div>
+
+    <main class="shell">
+      <aside class="sidebar" aria-label="Application navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">R</span>
+          <div>
+            <strong>RAG Platform</strong>
+            <span>Knowledge console</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Workspace views">
+          <button class="nav-item is-active" data-view="chat" type="button">
+            <span aria-hidden="true">01</span> Conversation
+          </button>
+          <button class="nav-item" data-view="profile" type="button">
+            <span aria-hidden="true">02</span> Assistant profile
+          </button>
+        </nav>
+
+        <div class="system-card">
+          <div class="status-line">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="api-status">Checking API</span>
+          </div>
+          <p>Grounded answers. Private sessions. No internal reasoning exposed.</p>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Private knowledge workspace</span>
+            <h1 id="page-title">Conversation</h1>
+          </div>
+          <button class="secondary-button" id="new-chat" type="button">New conversation</button>
+        </header>
+
+        <section class="view is-active" id="chat" data-panel="chat" aria-labelledby="page-title">
+          <div class="chat-frame">
+            <div class="messages" id="messages" aria-live="polite" aria-label="Conversation messages">
+              <article class="welcome-card" id="welcome-card">
+                <span class="card-index">READY / 01</span>
+                <h2>Ask your knowledge base.</h2>
+                <p id="welcome-copy">Get focused answers grounded only in your indexed content.</p>
+                <div class="prompt-row" aria-label="Suggested prompts">
+                  <button class="prompt-chip" type="button">What can you help me with?</button>
+                  <button class="prompt-chip" type="button">Summarize the available information.</button>
+                </div>
+              </article>
+            </div>
+
+            <form class="composer" id="chat-form">
+              <label class="sr-only" for="message">Your message</label>
+              <textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Ask a question about your knowledge base…" required></textarea>
+              <div class="composer-footer">
+                <span id="composer-status">Session memory is active</span>
+                <button class="send-button" id="send-button" type="submit">
+                  Send <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="view" id="profile" data-panel="profile" aria-labelledby="profile-heading" hidden>
+          <div class="profile-intro">
+            <span class="eyebrow">Runtime configuration</span>
+            <h2 id="profile-heading">Shape the assistant for your use case.</h2>
+            <p>The immutable grounding rules remain protected. These fields control voice, domain, and response style.</p>
+          </div>
+
+          <form class="profile-form" id="profile-form">
+            <div class="field-grid">
+              <label>Name<input name="name" maxlength="80" required></label>
+              <label>Domain<input name="domain" maxlength="200" required></label>
+              <label>Role<input name="role" maxlength="200" required></label>
+              <label>Tone<input name="tone" maxlength="100" required></label>
+              <label class="wide">Language<input name="language" maxlength="100" required></label>
+              <label class="wide">Additional instructions<textarea name="instructions" rows="4" maxlength="2000"></textarea></label>
+              <label class="wide">Fallback message<textarea name="fallback_message" rows="3" maxlength="300" required></textarea></label>
+            </div>
+            <div class="form-actions">
+              <p id="profile-status" role="status">Loading profile…</p>
+              <button class="primary-button" id="save-profile" type="submit">Save profile</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>
