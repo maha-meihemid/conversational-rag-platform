@@ -1,1 +1,1 @@
-"""Banking RAG Assistant application package."""
+"""Conversational RAG Platform application package."""

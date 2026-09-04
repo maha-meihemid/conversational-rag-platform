@@ -7,4 +7,4 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    return HealthResponse(status="ok", service="banking-rag-assistant")
+    return HealthResponse(status="ok", service="conversational-rag-platform")

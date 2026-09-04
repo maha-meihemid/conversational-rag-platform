@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import json
 import re
@@ -10,18 +9,16 @@ from collections import Counter
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, cast
 
-DEFAULT_INPUT = Path(
-    "data/raw/banking-faq-dataset/banking_knowledge_base_1000.csv"
-)
-DEFAULT_OUTPUT = Path("data/processed/banking_faq.jsonl")
+DEFAULT_INPUT = Path("data/raw/knowledge_base.json")
+DEFAULT_OUTPUT = Path("data/processed/knowledge_base.jsonl")
 DEFAULT_REPORT = Path("data/processed/quality_report.json")
-REQUIRED_COLUMNS = {"Section", "Question", "Answer"}
-SOURCE_NAME = "kaggle-banking-faq-v4"
+SUPPORTED_FORMATS = {".json", ".jsonl"}
 
 
 @dataclass(frozen=True)
-class FAQRecord:
+class KnowledgeRecord:
     id: str
     category: str
     question: str
@@ -32,7 +29,7 @@ class FAQRecord:
 
 @dataclass(frozen=True)
 class PreparationResult:
-    records: list[FAQRecord]
+    records: list[KnowledgeRecord]
     rows_read: int
     blank_rows_removed: int
     duplicate_questions_removed: int
@@ -40,19 +37,28 @@ class PreparationResult:
 
 
 def normalize_text(value: str) -> str:
-    """Normalize Unicode and collapse repeated whitespace deterministically."""
     normalized = unicodedata.normalize("NFKC", value)
     return re.sub(r"\s+", " ", normalized).strip()
 
 
-def stable_faq_id(question: str) -> str:
+def stable_record_id(question: str) -> str:
     normalized_question = normalize_text(question).casefold().encode("utf-8")
     digest = hashlib.sha256(normalized_question).hexdigest()[:16]
-    return f"faq_{digest}"
+    return f"record_{digest}"
 
 
-def prepare_rows(rows: Iterable[dict[str, str]]) -> PreparationResult:
-    records: list[FAQRecord] = []
+def optional_text(value: Any, default: str = "") -> str:
+    if not isinstance(value, str):
+        return default
+    return normalize_text(value) or default
+
+
+def prepare_records(
+    rows: Iterable[dict[str, Any]],
+    *,
+    default_source: str,
+) -> PreparationResult:
+    records: list[KnowledgeRecord] = []
     seen_questions: set[str] = set()
     categories: Counter[str] = Counter()
     rows_read = 0
@@ -61,11 +67,10 @@ def prepare_rows(rows: Iterable[dict[str, str]]) -> PreparationResult:
 
     for row in rows:
         rows_read += 1
-        category = normalize_text(row.get("Section", ""))
-        question = normalize_text(row.get("Question", ""))
-        answer = normalize_text(row.get("Answer", ""))
+        question = optional_text(row.get("question"))
+        answer = optional_text(row.get("answer"))
 
-        if not category or not question or not answer:
+        if not question or not answer:
             blank_rows_removed += 1
             continue
 
@@ -74,15 +79,17 @@ def prepare_rows(rows: Iterable[dict[str, str]]) -> PreparationResult:
             duplicate_questions_removed += 1
             continue
 
+        category = optional_text(row.get("category"), "General")
+        source = optional_text(row.get("source"), default_source)
         seen_questions.add(question_key)
         categories[category] += 1
         records.append(
-            FAQRecord(
-                id=stable_faq_id(question),
+            KnowledgeRecord(
+                id=stable_record_id(question),
                 category=category,
                 question=question,
                 answer=answer,
-                source=SOURCE_NAME,
+                source=source,
                 content=f"Question: {question}\nAnswer: {answer}",
             )
         )
@@ -96,20 +103,32 @@ def prepare_rows(rows: Iterable[dict[str, str]]) -> PreparationResult:
     )
 
 
-def read_csv(input_path: Path) -> PreparationResult:
+def read_input(input_path: Path) -> list[dict[str, Any]]:
     if not input_path.is_file():
-        raise FileNotFoundError(
-            f"Dataset not found at {input_path}. See README.md for download instructions."
-        )
+        raise FileNotFoundError(f"Knowledge-base file not found at {input_path}.")
+    if input_path.suffix.lower() not in SUPPORTED_FORMATS:
+        raise ValueError("Knowledge-base input must be a .json or .jsonl file.")
 
-    with input_path.open("r", encoding="utf-8-sig", newline="") as file:
-        reader = csv.DictReader(file)
-        columns = set(reader.fieldnames or [])
-        missing_columns = REQUIRED_COLUMNS - columns
-        if missing_columns:
-            missing = ", ".join(sorted(missing_columns))
-            raise ValueError(f"Dataset is missing required columns: {missing}")
-        return prepare_rows(reader)
+    if input_path.suffix.lower() == ".json":
+        data = json.loads(input_path.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
+            raise ValueError("JSON input must contain an array of objects.")
+        return cast(list[dict[str, Any]], data)
+
+    rows: list[dict[str, Any]] = []
+    with input_path.open("r", encoding="utf-8-sig") as file:
+        for line_number, line in enumerate(file, start=1):
+            if not line.strip():
+                continue
+            item = json.loads(line)
+            if not isinstance(item, dict):
+                raise ValueError(f"JSONL record on line {line_number} must be an object.")
+            rows.append(item)
+    return rows
+
+
+def prepare_file(input_path: Path) -> PreparationResult:
+    return prepare_records(read_input(input_path), default_source=input_path.stem)
 
 
 def sha256_file(path: Path) -> str:
@@ -120,7 +139,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def write_jsonl(records: Iterable[FAQRecord], output_path: Path) -> None:
+def write_jsonl(records: Iterable[KnowledgeRecord], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = output_path.with_suffix(f"{output_path.suffix}.tmp")
     with temporary_path.open("w", encoding="utf-8", newline="\n") as file:
@@ -136,7 +155,6 @@ def write_report(
     report_path: Path,
 ) -> None:
     report = {
-        "source": SOURCE_NAME,
         "input_file": input_path.as_posix(),
         "input_sha256": sha256_file(input_path),
         "output_file": output_path.as_posix(),
@@ -157,7 +175,7 @@ def write_report(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validate and normalize the Kaggle banking FAQ dataset."
+        description="Validate and normalize a JSON or JSONL Q&A knowledge base."
     )
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -167,11 +185,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    result = read_csv(args.input)
+    result = prepare_file(args.input)
     write_jsonl(result.records, args.output)
     write_report(result, args.input, args.output, args.report)
     print(
-        f"Prepared {len(result.records)} FAQ records from {result.rows_read} rows "
+        f"Prepared {len(result.records)} knowledge records from {result.rows_read} rows "
         f"({result.duplicate_questions_removed} duplicates removed)."
     )
 

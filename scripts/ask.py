@@ -6,8 +6,8 @@ from app.services.conversation import create_conversation_service
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ask the banking RAG assistant a question.")
-    parser.add_argument("question", help="Banking question to answer.")
+    parser = argparse.ArgumentParser(description="Ask the conversational RAG assistant.")
+    parser.add_argument("question", help="Question to answer from the knowledge base.")
     parser.add_argument(
         "--conversation-id",
         default="terminal",
