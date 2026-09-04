@@ -3,11 +3,14 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
 from app.api.dependencies import get_conversation_service
+from app.core.config import settings
 from app.main import app
 
 client = TestClient(app)
+AUTH_HEADERS = {"X-API-Key": "test-api-key"}
 
 
 class FakeConversationService:
@@ -36,10 +39,19 @@ def conversation_service() -> Iterator[FakeConversationService]:
     app.dependency_overrides.clear()
 
 
+@pytest.fixture(autouse=True)
+def api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "app_api_key", SecretStr(AUTH_HEADERS["X-API-Key"]))
+
+
 def test_chat_creates_conversation_id(
     conversation_service: FakeConversationService,
 ) -> None:
-    response = client.post("/api/v1/chat", json={"message": "How can I change my PIN?"})
+    response = client.post(
+        "/api/v1/chat",
+        json={"message": "How can I change my PIN?"},
+        headers=AUTH_HEADERS,
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -60,6 +72,7 @@ def test_chat_continues_existing_conversation(
             "message": "How long does it take?",
             "conversation_id": str(conversation_id),
         },
+        headers=AUTH_HEADERS,
     )
 
     assert response.status_code == 200
@@ -72,7 +85,11 @@ def test_chat_continues_existing_conversation(
 def test_chat_rejects_blank_message(
     conversation_service: FakeConversationService,
 ) -> None:
-    response = client.post("/api/v1/chat", json={"message": "   "})
+    response = client.post(
+        "/api/v1/chat",
+        json={"message": "   "},
+        headers=AUTH_HEADERS,
+    )
 
     assert response.status_code == 422
     assert conversation_service.ask_calls == []
@@ -80,7 +97,10 @@ def test_chat_rejects_blank_message(
 
 def test_clear_conversation(conversation_service: FakeConversationService) -> None:
     conversation_id = uuid4()
-    response = client.delete(f"/api/v1/conversations/{conversation_id}")
+    response = client.delete(
+        f"/api/v1/conversations/{conversation_id}",
+        headers=AUTH_HEADERS,
+    )
 
     assert response.status_code == 204
     assert response.content == b""
@@ -92,9 +112,53 @@ def test_chat_hides_internal_service_error(
 ) -> None:
     conversation_service.error = RuntimeError("Private provider error")
 
-    response = client.post("/api/v1/chat", json={"message": "A valid question"})
+    response = client.post(
+        "/api/v1/chat",
+        json={"message": "A valid question"},
+        headers=AUTH_HEADERS,
+    )
 
     assert response.status_code == 503
     assert response.json() == {
         "detail": "The chat service is temporarily unavailable."
     }
+
+
+def test_chat_rejects_missing_api_key(
+    conversation_service: FakeConversationService,
+) -> None:
+    response = client.post("/api/v1/chat", json={"message": "A valid question"})
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid or missing API key."}
+    assert conversation_service.ask_calls == []
+
+
+def test_chat_rejects_invalid_api_key(
+    conversation_service: FakeConversationService,
+) -> None:
+    response = client.post(
+        "/api/v1/chat",
+        json={"message": "A valid question"},
+        headers={"X-API-Key": "wrong-key"},
+    )
+
+    assert response.status_code == 401
+    assert conversation_service.ask_calls == []
+
+
+def test_chat_fails_closed_without_configured_api_key(
+    conversation_service: FakeConversationService,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "app_api_key", SecretStr(""))
+
+    response = client.post(
+        "/api/v1/chat",
+        json={"message": "A valid question"},
+        headers=AUTH_HEADERS,
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "API authentication is not configured."}
+    assert conversation_service.ask_calls == []

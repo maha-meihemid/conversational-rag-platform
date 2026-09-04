@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
 
+    app_api_key: SecretStr = SecretStr("")
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "qwen/qwen3.6-27b"
 
