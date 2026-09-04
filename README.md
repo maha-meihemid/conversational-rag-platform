@@ -386,6 +386,20 @@ mypy app scripts
 Tests use in-memory histories and dependency overrides. They do not call Groq or
 download embedding models.
 
+Run one test layer at a time:
+
+```powershell
+pytest -m unit
+pytest -m api
+pytest -m integration
+```
+
+Generate a coverage report and enforce the configured 85% minimum:
+
+```powershell
+pytest --cov=app --cov-report=term-missing
+```
+
 ## Docker
 
 Docker runs the API and web interface as a non-root user. The local `data` and
