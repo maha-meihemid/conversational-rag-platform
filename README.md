@@ -106,6 +106,25 @@ error.
 limits are bounded to prevent accidental resource-heavy configurations. The complete
 list of supported variables and safe local defaults is available in `.env.example`.
 
+### Secret management
+
+`GROQ_API_KEY` is the only application secret. It is represented as a masked secret
+inside the application and is never returned by the API. For local development, keep
+it in the untracked `.env` file. Never add a real key to `.env.example`.
+
+In a production environment, inject the secret through the platform's environment
+configuration instead of copying `.env` into the image. For example, PowerShell can
+provide it to a local process without writing it to the repository:
+
+```powershell
+$env:GROQ_API_KEY = "your_key_here"
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Docker Compose reads the local `.env` file at runtime. Both `.gitignore` and
+`.dockerignore` exclude local environment files, so secrets are neither committed nor
+included in the Docker build context.
+
 ## Prepare a knowledge base
 
 There are two supported workflows.
