@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     conversation_db_url: str = "sqlite:///./data/conversations.db"
     conversation_history_limit: int = Field(default=10, ge=1, le=100)
 
+    rate_limit_requests: int = Field(default=20, ge=1, le=1000)
+    rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
+
     @field_validator("api_v1_prefix")
     @classmethod
     def validate_api_prefix(cls, value: str) -> str:

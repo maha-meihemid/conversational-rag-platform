@@ -253,6 +253,24 @@ configured, protected endpoints return `503` instead of running without authenti
 The web interface keeps the entered access key only in browser `sessionStorage`; it is
 removed when the browser tab is closed.
 
+## Rate limiting
+
+Chat requests are limited per API key to protect the model provider and control costs.
+Configure the limit in `.env`:
+
+```env
+RATE_LIMIT_REQUESTS=20
+RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+When the limit is reached, `POST /api/v1/chat` returns `429 Too Many Requests` and a
+`Retry-After` header. Conversation deletion and assistant profile management are not
+included in this limit.
+
+The limiter is stored in the API process, which keeps the single-container deployment
+simple and requires no extra service. Use a shared Redis-backed limiter when deploying
+multiple API replicas.
+
 ## Conversation memory
 
 LangChain's `RunnableWithMessageHistory` manages the conversation lifecycle, while

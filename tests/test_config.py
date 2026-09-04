@@ -9,6 +9,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("APP_DEBUG", "false")
     monkeypatch.setenv("RETRIEVAL_TOP_K", "8")
     monkeypatch.setenv("API_V1_PREFIX", "/api/v2/")
+    monkeypatch.setenv("RATE_LIMIT_REQUESTS", "30")
 
     configured = Settings(_env_file=None)  # type: ignore[call-arg]
 
@@ -16,6 +17,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     assert configured.app_debug is False
     assert configured.retrieval_top_k == 8
     assert configured.api_v1_prefix == "/api/v2"
+    assert configured.rate_limit_requests == 30
 
 
 @pytest.mark.parametrize("top_k", ["0", "21"])
@@ -31,6 +33,13 @@ def test_settings_reject_invalid_retrieval_top_k(
 
 def test_settings_reject_invalid_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("APP_ENV", "staging")
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)  # type: ignore[call-arg]
+
+
+def test_settings_reject_invalid_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RATE_LIMIT_REQUESTS", "0")
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)  # type: ignore[call-arg]
