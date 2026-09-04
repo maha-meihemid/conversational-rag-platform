@@ -1,8 +1,9 @@
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -21,6 +22,10 @@ def create_app() -> FastAPI:
     application.middleware("http")(log_request)
     application.include_router(api_router, prefix=settings.api_v1_prefix)
     application.mount("/static", StaticFiles(directory=web_directory), name="static")
+
+    @application.get("/metrics", include_in_schema=False)
+    def metrics() -> Response:
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     @application.get("/", include_in_schema=False)
     def web_app() -> FileResponse:

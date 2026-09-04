@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from fastapi import Request, Response
 
+from app.core.metrics import record_request
+
 logger = logging.getLogger("app.requests")
 
 
@@ -22,8 +24,15 @@ async def log_request(
         response.headers["X-Request-ID"] = request_id
         return response
     finally:
+        duration_seconds = perf_counter() - started_at
         route = request.scope.get("route")
         path = getattr(route, "path", request.url.path)
+        record_request(
+            method=request.method,
+            route=path,
+            status_code=status_code,
+            duration_seconds=duration_seconds,
+        )
         logger.info(
             "Request completed",
             extra={
@@ -31,6 +40,6 @@ async def log_request(
                 "method": request.method,
                 "path": path,
                 "status_code": status_code,
-                "duration_ms": round((perf_counter() - started_at) * 1000, 2),
+                "duration_ms": round(duration_seconds * 1000, 2),
             },
         )
