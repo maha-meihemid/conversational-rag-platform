@@ -268,6 +268,42 @@ mypy app scripts
 Tests use in-memory histories and dependency overrides. They do not call Groq or
 download embedding models.
 
+## Docker
+
+Docker runs the API and web interface as a non-root user. The local `data` and
+`chroma_db` directories are mounted into the container, so the knowledge base,
+conversation memory, and assistant profile survive container restarts.
+
+Create `.env` first, then build the image:
+
+```powershell
+docker compose build
+```
+
+Prepare and index a knowledge base through the same image when needed:
+
+```powershell
+docker compose run --rm api python scripts/prepare_dataset.py
+docker compose run --rm api python scripts/index_knowledge_base.py
+```
+
+Start the platform:
+
+```powershell
+docker compose up -d
+docker compose ps
+```
+
+Open `http://127.0.0.1:8000`. Stop the service without deleting persisted data:
+
+```powershell
+docker compose down
+```
+
+The `.dockerignore` file excludes local secrets, tests, caches, and runtime data
+from the build context. The Groq API key is provided only at runtime through the
+local `.env` file.
+
 ## Local persistence
 
 The following runtime artifacts are excluded from Git:
