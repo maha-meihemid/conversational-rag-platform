@@ -209,6 +209,31 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Application secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Local application data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/conversations.db*
+data/assistant_profile.json*
+chroma_db/*
+!chroma_db/.gitkeep
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

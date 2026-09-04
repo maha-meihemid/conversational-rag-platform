@@ -1,0 +1,14 @@
+[
+  {
+    "question": "How do I reset my password?",
+    "answer": "Open account settings, select Security, and choose Reset password.",
+    "category": "Account",
+    "source": "Product documentation"
+  },
+  {
+    "question": "How can I contact support?",
+    "answer": "Use the support form available from the Help page.",
+    "category": "Support",
+    "source": "Help center"
+  }
+]

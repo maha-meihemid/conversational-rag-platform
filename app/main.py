@@ -1,0 +1,37 @@
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+from app.api.router import api_router
+from app.core.config import settings
+from app.core.logging import configure_logging
+from app.core.request_logging import log_request
+
+
+def create_app() -> FastAPI:
+    configure_logging(settings.log_level)
+    web_directory = Path(__file__).parent / "web"
+    application = FastAPI(
+        title=settings.app_name,
+        debug=settings.app_debug,
+        version="0.1.0",
+    )
+    application.middleware("http")(log_request)
+    application.include_router(api_router, prefix=settings.api_v1_prefix)
+    application.mount("/static", StaticFiles(directory=web_directory), name="static")
+
+    @application.get("/metrics", include_in_schema=False)
+    def metrics() -> Response:
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+    @application.get("/", include_in_schema=False)
+    def web_app() -> FileResponse:
+        return FileResponse(web_directory / "index.html")
+
+    return application
+
+
+app = create_app()
