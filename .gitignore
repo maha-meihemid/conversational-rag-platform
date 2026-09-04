@@ -220,6 +220,7 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 data/conversations.db*
+data/assistant_profile.json*
 chroma_db/*
 !chroma_db/.gitkeep
 

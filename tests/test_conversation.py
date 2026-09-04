@@ -11,9 +11,9 @@ def test_follow_up_question_uses_and_updates_history() -> None:
     search_queries: list[str] = []
     model_responses = iter(
         [
-            "You can request a replacement in the mobile app.",
-            "How long does a replacement card take to arrive?",
-            "A replacement card usually arrives within five business days.",
+            "You can track the order from the Orders page.",
+            "How long does order delivery take?",
+            "Order delivery usually takes five business days.",
         ]
     )
 
@@ -25,11 +25,11 @@ def test_follow_up_question_uses_and_updates_history() -> None:
         return [
             (
                 Document(
-                    page_content="Question: Card replacement\nAnswer: Within five business days.",
+                    page_content="Question: Order delivery\nAnswer: Within five business days.",
                     metadata={
-                        "faq_id": "faq-1",
-                        "category": "Cards",
-                        "question": "How long does card replacement take?",
+                        "record_id": "record-1",
+                        "category": "Orders",
+                        "question": "How long does order delivery take?",
                     },
                 ),
                 0.90,
@@ -42,14 +42,14 @@ def test_follow_up_question_uses_and_updates_history() -> None:
     rag_service = RAGChatService(search, generate)
     conversation = ConversationService(rag_service, get_history)
 
-    first_answer = conversation.ask("How do I replace my card?", "customer-1")
+    first_answer = conversation.ask("How do I track my order?", "customer-1")
     second_answer = conversation.ask("How long does it take?", "customer-1")
 
-    assert first_answer == "You can request a replacement in the mobile app."
-    assert second_answer == "A replacement card usually arrives within five business days."
+    assert first_answer == "You can track the order from the Orders page."
+    assert second_answer == "Order delivery usually takes five business days."
     assert search_queries == [
-        "How do I replace my card?",
-        "How long does a replacement card take to arrive?",
+        "How do I track my order?",
+        "How long does order delivery take?",
     ]
     assert len(histories["customer-1"].messages) == 4
 

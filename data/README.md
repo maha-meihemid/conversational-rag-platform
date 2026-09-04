@@ -1,29 +1,37 @@
 # Data directory
 
-This directory contains local source data and generated artifacts. Dataset files
-are excluded from version control; only this documentation and placeholder files
-are tracked.
+Runtime data is excluded from version control. The platform expects a generic JSON
+or JSONL Q&A source at `data/raw/knowledge_base.json` by default.
 
-## Source
+Required fields:
 
-- Dataset: Banking FAQ Dataset for NLP, RAG & Chatbot Dev
-- Author: Rudra Kumar Gupta
-- Kaggle version: 4
-- License: MIT
-- Source file: `banking_knowledge_base_1000.csv`
-- Expected columns: `Section`, `Question`, `Answer`
+- `question`
+- `answer`
 
-Download the source CSV from the repository root:
+Optional fields:
+
+- `category`
+- `source`
+
+Use `examples/knowledge_base.json` as a minimal template. Run the preparation and
+indexing pipeline from the repository root:
 
 ```powershell
-python scripts/download_dataset.py
+python scripts/prepare_dataset.py
+python scripts/index_knowledge_base.py
 ```
 
-The script places it at:
+For a dataset stored elsewhere on the local machine, keep it in place and pass its
+path directly:
 
-```text
-data/raw/banking-faq-dataset/banking_knowledge_base_1000.csv
+```powershell
+python scripts/prepare_dataset.py --input C:\path\to\knowledge_base.json
 ```
 
-Run `python scripts/prepare_dataset.py` from the repository root to validate and
-normalize it. Generated files are written to `data/processed`.
+If a knowledge base already uses the platform's processed JSONL schema (`id`,
+`category`, `question`, `answer`, `source`, and `content`), place it directly at
+`data/processed/knowledge_base.jsonl`. In that case, skip preparation and run only
+`python scripts/index_knowledge_base.py`.
+
+Generated knowledge records and reports are written to `data/processed`. Persistent
+conversation memory and the editable assistant profile are also stored under `data`.

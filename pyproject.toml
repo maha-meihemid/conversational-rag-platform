@@ -3,9 +3,9 @@ requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "banking-rag-assistant"
+name = "conversational-rag-platform"
 version = "0.1.0"
-description = "Conversational RAG assistant for banking FAQs"
+description = "Production-ready conversational RAG platform for JSON Q&A knowledge bases"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

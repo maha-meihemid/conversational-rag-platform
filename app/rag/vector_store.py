@@ -11,7 +11,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from app.core.config import settings
 
-DEFAULT_KNOWLEDGE_BASE = Path("data/processed/banking_faq.jsonl")
+DEFAULT_KNOWLEDGE_BASE = Path("data/processed/knowledge_base.jsonl")
 
 
 def create_embeddings() -> HuggingFaceEmbeddings:
@@ -36,7 +36,9 @@ def create_vector_store(
     )
 
 
-def load_faq_documents(path: Path = DEFAULT_KNOWLEDGE_BASE) -> tuple[list[Document], list[str]]:
+def load_knowledge_documents(
+    path: Path = DEFAULT_KNOWLEDGE_BASE,
+) -> tuple[list[Document], list[str]]:
     if not path.is_file():
         raise FileNotFoundError(
             f"Knowledge base not found at {path}. Run scripts/prepare_dataset.py first."
@@ -52,10 +54,10 @@ def load_faq_documents(path: Path = DEFAULT_KNOWLEDGE_BASE) -> tuple[list[Docume
 
             try:
                 record = json.loads(line)
-                faq_id = str(record["id"])
+                record_id = str(record["id"])
                 content = str(record["content"])
                 metadata = {
-                    "faq_id": faq_id,
+                    "record_id": record_id,
                     "category": str(record["category"]),
                     "question": str(record["question"]),
                     "answer": str(record["answer"]),
@@ -64,7 +66,7 @@ def load_faq_documents(path: Path = DEFAULT_KNOWLEDGE_BASE) -> tuple[list[Docume
             except (json.JSONDecodeError, KeyError, TypeError) as error:
                 raise ValueError(f"Invalid knowledge-base record on line {line_number}.") from error
 
-            ids.append(faq_id)
+            ids.append(record_id)
             documents.append(Document(page_content=content, metadata=metadata))
 
     if not documents:

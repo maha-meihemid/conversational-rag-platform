@@ -6,7 +6,7 @@ from app.rag.vector_store import create_embeddings, create_vector_store, search_
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Search the banking FAQ knowledge base.")
+    parser = argparse.ArgumentParser(description="Search the configured knowledge base.")
     parser.add_argument("query", help="Question to search for.")
     parser.add_argument("--top-k", type=int, default=None)
     return parser.parse_args()
