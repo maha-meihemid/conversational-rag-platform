@@ -1,5 +1,7 @@
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +13,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Conversational RAG Platform"
-    app_env: str = "development"
+    app_env: Literal["development", "test", "production"] = "development"
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
 
@@ -38,11 +40,19 @@ class Settings(BaseSettings):
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
     embedding_device: str = "cpu"
-    retrieval_top_k: int = 5
-    retrieval_min_score: float = 0.35
+    retrieval_top_k: int = Field(default=5, ge=1, le=20)
+    retrieval_min_score: float = Field(default=0.35, ge=0.0, le=1.0)
 
     conversation_db_url: str = "sqlite:///./data/conversations.db"
-    conversation_history_limit: int = 10
+    conversation_history_limit: int = Field(default=10, ge=1, le=100)
+
+    @field_validator("api_v1_prefix")
+    @classmethod
+    def validate_api_prefix(cls, value: str) -> str:
+        prefix = value.strip().rstrip("/")
+        if not prefix.startswith("/"):
+            raise ValueError("API_V1_PREFIX must start with '/'")
+        return prefix
 
 
 @lru_cache
