@@ -12,6 +12,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("RATE_LIMIT_REQUESTS", "30")
     monkeypatch.setenv("GROQ_TIMEOUT_SECONDS", "45.5")
     monkeypatch.setenv("GROQ_MAX_RETRIES", "3")
+    monkeypatch.setenv("LOG_LEVEL", "WARNING")
 
     configured = Settings(_env_file=None)  # type: ignore[call-arg]
 
@@ -22,6 +23,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     assert configured.rate_limit_requests == 30
     assert configured.groq_timeout_seconds == 45.5
     assert configured.groq_max_retries == 3
+    assert configured.log_level == "WARNING"
 
 
 @pytest.mark.parametrize("top_k", ["0", "21"])
@@ -37,6 +39,13 @@ def test_settings_reject_invalid_retrieval_top_k(
 
 def test_settings_reject_invalid_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("APP_ENV", "staging")
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)  # type: ignore[call-arg]
+
+
+def test_settings_reject_invalid_log_level(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOG_LEVEL", "VERBOSE")
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)  # type: ignore[call-arg]

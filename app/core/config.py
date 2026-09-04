@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     app_api_key: SecretStr = SecretStr("")
     groq_api_key: SecretStr = SecretStr("")

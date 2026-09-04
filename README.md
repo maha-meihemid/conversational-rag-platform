@@ -285,6 +285,20 @@ open indefinitely. Retries handle short-lived provider and network failures. Lan
 `ChatGroq` integration applies both settings to model calls, including question rewriting
 when conversation history is present. Keep the retry count low to limit latency and cost.
 
+## Structured logging
+
+Application request logs are written as one JSON object per line. Configure their
+minimum severity with:
+
+```env
+LOG_LEVEL=INFO
+```
+
+Each completed request records a generated request ID, HTTP method, route, status code,
+and duration. The same identifier is returned in the `X-Request-ID` response header for
+support and troubleshooting. API keys, request bodies, answers, and conversation history
+are never included in request logs.
+
 ## Health and readiness
 
 The public probe endpoints serve different purposes:
