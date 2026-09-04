@@ -1,11 +1,16 @@
 services:
   api:
     build: .
+    image: conversational-rag-platform:local
     env_file:
       - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
     ports:
       - "8000:8000"
     volumes:
       - ./chroma_db:/app/chroma_db
       - ./data:/app/data
+    init: true
     restart: unless-stopped
