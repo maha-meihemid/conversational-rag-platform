@@ -347,6 +347,8 @@ GROQ_MAX_RETRIES=2
 ```
 
 The output limit keeps generated answers concise and compatible with provider token quotas.
+Qwen reasoning is disabled so this budget is reserved for the final answer and internal
+thinking is never returned to users.
 The timeout prevents a slow provider or network connection from keeping an API request open
 indefinitely. Retries handle short-lived provider and network failures. LangChain's
 `ChatGroq` integration applies these settings to model calls, including question rewriting

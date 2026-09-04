@@ -161,7 +161,7 @@ def create_rag_chat_service() -> RAGChatService:
         model=settings.groq_model,
         api_key=groq_api_key,
         temperature=0,
-        reasoning_format="hidden",
+        reasoning_effort="none",
         max_tokens=settings.groq_max_tokens,
         timeout=settings.groq_timeout_seconds,
         max_retries=settings.groq_max_retries,
