@@ -12,6 +12,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("RATE_LIMIT_REQUESTS", "30")
     monkeypatch.setenv("GROQ_TIMEOUT_SECONDS", "45.5")
     monkeypatch.setenv("GROQ_MAX_RETRIES", "3")
+    monkeypatch.setenv("GROQ_MAX_TOKENS", "640")
     monkeypatch.setenv("LOG_LEVEL", "WARNING")
 
     configured = Settings(_env_file=None)  # type: ignore[call-arg]
@@ -23,6 +24,7 @@ def test_settings_load_values_from_environment(monkeypatch: pytest.MonkeyPatch) 
     assert configured.rate_limit_requests == 30
     assert configured.groq_timeout_seconds == 45.5
     assert configured.groq_max_retries == 3
+    assert configured.groq_max_tokens == 640
     assert configured.log_level == "WARNING"
 
 
@@ -65,6 +67,8 @@ def test_settings_reject_invalid_rate_limit(monkeypatch: pytest.MonkeyPatch) -> 
         ("GROQ_TIMEOUT_SECONDS", "121"),
         ("GROQ_MAX_RETRIES", "-1"),
         ("GROQ_MAX_RETRIES", "6"),
+        ("GROQ_MAX_TOKENS", "63"),
+        ("GROQ_MAX_TOKENS", "8193"),
     ],
 )
 def test_settings_reject_invalid_groq_resilience_values(

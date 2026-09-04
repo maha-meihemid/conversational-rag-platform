@@ -341,13 +341,15 @@ multiple API replicas.
 Each Groq request has a configurable timeout and a small retry budget:
 
 ```env
+GROQ_MAX_TOKENS=512
 GROQ_TIMEOUT_SECONDS=30
 GROQ_MAX_RETRIES=2
 ```
 
-The timeout prevents a slow provider or network connection from keeping an API request
-open indefinitely. Retries handle short-lived provider and network failures. LangChain's
-`ChatGroq` integration applies both settings to model calls, including question rewriting
+The output limit keeps generated answers concise and compatible with provider token quotas.
+The timeout prevents a slow provider or network connection from keeping an API request open
+indefinitely. Retries handle short-lived provider and network failures. LangChain's
+`ChatGroq` integration applies these settings to model calls, including question rewriting
 when conversation history is present. Keep the retry count low to limit latency and cost.
 
 ## Structured logging

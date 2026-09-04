@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     app_api_key: SecretStr = SecretStr("")
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "qwen/qwen3.6-27b"
+    groq_max_tokens: int = Field(default=512, ge=64, le=8192)
     groq_timeout_seconds: float = Field(default=30.0, ge=1.0, le=120.0)
     groq_max_retries: int = Field(default=2, ge=0, le=5)
 
