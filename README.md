@@ -1,6 +1,12 @@
 # Conversational RAG Platform
 
 [![CI](https://github.com/maha-meihemid/conversational-rag-platform/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/maha-meihemid/conversational-rag-platform/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-1.x-1C3C3C)](https://python.langchain.com/)
+[![ChromaDB](https://img.shields.io/badge/Vector_store-ChromaDB-FF6446)](https://www.trychroma.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A production-oriented conversational RAG API for JSON and JSONL question-answer
 knowledge bases. It combines LangChain, ChromaDB, multilingual embeddings, Groq,
@@ -9,6 +15,43 @@ FastAPI, and persistent session memory.
 The platform is domain-independent. Product documentation, support FAQs, internal
 policies, educational content, and other Q&A datasets can use the same pipeline
 without code changes. The banking dataset is retained only as an optional example.
+
+## Quick start
+
+The fastest demonstration uses the included knowledge base. Python 3.12 and a
+[Groq API key](https://console.groq.com/keys) are required.
+
+```powershell
+git clone https://github.com/maha-meihemid/conversational-rag-platform.git
+Set-Location conversational-rag-platform
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+Copy-Item .env.example .env
+Copy-Item examples/knowledge_base.json data/raw/knowledge_base.json
+```
+
+Set `GROQ_API_KEY` and replace `APP_API_KEY` with a private random value in `.env`,
+then prepare and index the example:
+
+```powershell
+python scripts/prepare_dataset.py
+python scripts/index_knowledge_base.py
+uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000`, enter the same `APP_API_KEY` in the interface, and
+start a conversation. API documentation is available at
+`http://127.0.0.1:8000/docs`.
+
+For Linux or macOS, activate the environment with `source .venv/bin/activate` and
+copy files with `cp`. All remaining Python commands are identical.
+
+> The first indexing run downloads the multilingual embedding model and can take
+> longer than later starts.
+
+For a container-based launch and production checklist, see the
+[deployment runbook](docs/DEPLOYMENT.md).
 
 ## Core capabilities
 
@@ -26,28 +69,48 @@ without code changes. The banking dataset is retained only as an optional exampl
 
 ## Architecture
 
-```text
-JSON / JSONL knowledge base
-            |
-            v
-Validation and normalization
-            |
-            v
-Embeddings -> ChromaDB
-                 |
-User -> FastAPI -> LangChain conversation memory
-                 |          |
-                 |          v
-                 |   Standalone question
-                 |          |
-                 +----------+
-                            |
-                            v
-                    Grounded Groq answer
+```mermaid
+flowchart LR
+    D[JSON / JSONL Q&A] --> P[Validation and normalization]
+    P --> E[Multilingual embeddings]
+    E --> C[(ChromaDB)]
+    U[Web or API client] --> F[FastAPI]
+    F --> M[LangChain conversation service]
+    M <--> S[(SQLite memory)]
+    M --> R[Semantic retrieval]
+    R <--> C
+    R --> G[Groq chat model]
+    G --> F
+    F --> U
 ```
 
 ChromaDB stores knowledge records. SQLite stores chat messages by conversation ID.
 These stores have separate responsibilities and can be replaced independently.
+
+### Request lifecycle
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant API as FastAPI
+    participant Memory as SQLite memory
+    participant Search as ChromaDB
+    participant Model as Groq via LangChain
+
+    User->>API: Message + conversation ID
+    API->>API: Authenticate and rate-limit
+    API->>Memory: Load recent messages
+    opt Follow-up question
+        API->>Model: Rewrite as a standalone question
+        Model-->>API: Search-ready question
+    end
+    API->>Search: Similarity search
+    Search-->>API: Relevant Q&A context
+    API->>Model: Grounded prompt + context
+    Model-->>API: Final answer
+    API->>Memory: Persist user and assistant messages
+    API-->>User: Conversation ID + answer only
+```
 
 ## Knowledge-base format
 
@@ -420,6 +483,10 @@ Create `.env` first, then build the image:
 docker compose build
 ```
 
+If the source dataset is outside the repository, first prepare it locally with
+`--input`, or copy it to `data/raw/knowledge_base.json` before running the container
+commands. The `data` directory is mounted into the container.
+
 Prepare and index a knowledge base through the same image when needed:
 
 ```powershell
@@ -443,6 +510,9 @@ docker compose down
 The `.dockerignore` file excludes local secrets, tests, caches, and runtime data
 from the build context. The Groq API key is provided only at runtime through the
 local `.env` file.
+
+For HTTPS, reverse-proxy configuration, backup guidance, deployment verification,
+and scaling constraints, follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Local persistence
 
