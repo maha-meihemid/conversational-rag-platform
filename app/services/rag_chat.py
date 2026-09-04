@@ -162,8 +162,8 @@ def create_rag_chat_service() -> RAGChatService:
         api_key=groq_api_key,
         temperature=0,
         reasoning_format="hidden",
-        timeout=30,
-        max_retries=2,
+        timeout=settings.groq_timeout_seconds,
+        max_retries=settings.groq_max_retries,
     )
     profile_store = get_assistant_profile_store()
 
