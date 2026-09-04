@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A production-oriented conversational RAG API for JSON and JSONL question-answer
+Conversational RAG API for JSON and JSONL question-answer
 knowledge bases. It combines LangChain, ChromaDB, multilingual embeddings, Groq,
 FastAPI, and persistent session memory.
 
