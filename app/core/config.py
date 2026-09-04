@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
 
-    groq_api_key: str = ""
+    groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "qwen/qwen3.6-27b"
 
     assistant_name: str = "Knowledge Assistant"

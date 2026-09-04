@@ -34,3 +34,14 @@ def test_settings_reject_invalid_environment(monkeypatch: pytest.MonkeyPatch) ->
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)  # type: ignore[call-arg]
+
+
+def test_secret_is_masked_in_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    api_key = "test-secret-key"
+    monkeypatch.setenv("GROQ_API_KEY", api_key)
+
+    configured = Settings(_env_file=None)  # type: ignore[call-arg]
+
+    assert configured.groq_api_key.get_secret_value() == api_key
+    assert api_key not in repr(configured)
+    assert api_key not in configured.model_dump_json()

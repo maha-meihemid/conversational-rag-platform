@@ -152,13 +152,14 @@ class RAGChatService:
 
 
 def create_rag_chat_service() -> RAGChatService:
-    if not settings.groq_api_key:
-        raise RuntimeError("GROQ_API_KEY is missing. Add it to your .env file.")
+    groq_api_key = settings.groq_api_key.get_secret_value()
+    if not groq_api_key:
+        raise RuntimeError("GROQ_API_KEY is missing. Set it in the application environment.")
 
     vector_store = create_vector_store(create_embeddings())
     chat_model = ChatGroq(
         model=settings.groq_model,
-        api_key=settings.groq_api_key,
+        api_key=groq_api_key,
         temperature=0,
         reasoning_format="hidden",
         timeout=30,
