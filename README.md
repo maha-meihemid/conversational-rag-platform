@@ -1,5 +1,7 @@
 # Conversational RAG Platform
 
+[![CI](https://github.com/maha-meihemid/conversational-rag-platform/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/maha-meihemid/conversational-rag-platform/actions/workflows/ci.yml)
+
 A production-oriented conversational RAG API for JSON and JSONL question-answer
 knowledge bases. It combines LangChain, ChromaDB, multilingual embeddings, Groq,
 FastAPI, and persistent session memory.
@@ -399,6 +401,12 @@ Generate a coverage report and enforce the configured 85% minimum:
 ```powershell
 pytest --cov=app --cov-report=term-missing
 ```
+
+### Continuous integration
+
+GitHub Actions runs Ruff and the complete test suite with the 85% coverage threshold
+on every push and pull request targeting `develop` or `main`. The CI workflow does
+not require application secrets because tests mock or replace external services.
 
 ## Docker
 
